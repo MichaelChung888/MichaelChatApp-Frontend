@@ -19,9 +19,9 @@ export default function RegisterLoginForm() {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        await axios.post(isLoginOrRegister, { username, password }).then(data => {
+        await axios.post(isLoginOrRegister, { username, password }).then(res => {
             setLoggedInUsername(username);
-            setLoggedInId(data.id);
+            setLoggedInId(res.data.id);
             setIncorrectUserPass(false);
         }).catch(() => setIncorrectUserPass(true)); 
         //This will send the form data to the server and respond with userId if successful

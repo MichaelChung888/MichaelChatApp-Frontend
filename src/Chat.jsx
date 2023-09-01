@@ -51,7 +51,7 @@ export default function Chat() {
 
     useEffect(() => {
         connectToWs();
-    }, []); //This effect hook is only ran once, at the start (due to "[]")
+    }, [selectedUserId]); //This effect hook is only ran once, at the start (due to "[]")
 
     //This "WebSocket" allows data exchange between the client and server over a persistent connection
     function connectToWs() {
