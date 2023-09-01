@@ -11,11 +11,11 @@ export function UserContextProvider({ children }) {
 
     //useEffect Hook allows you to perform side effects in your components e.g fetching data.
     //These effects are meant to be performed after every render/change but due to 2nd param being "[]", it will only run on the first render.
-    useEffect(() => {
+    useEffect(() => { //This is used when for e.g you are logged in but refresh the page. Due to cookies, you can fetch your profile to stay logged in
         axios.get("/profile").then(result => {
             setLoggedInId(result.data.userId);
             setLoggedInUsername(result.data.username);
-        });
+        }).catch(() => {});
     }, []);
 
     return (

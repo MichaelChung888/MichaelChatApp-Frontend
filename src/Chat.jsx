@@ -55,7 +55,7 @@ export default function Chat() {
 
     //This "WebSocket" allows data exchange between the client and server over a persistent connection
     function connectToWs() {
-        const ws = new WebSocket("ws://localhost:4000"); //Set up a websocket connection to our server/backend
+        const ws = new WebSocket("ws://michaelchatapp-backend.onrender.com"); //Set up a websocket connection to our server/backend
         setWs(ws);
         ws.addEventListener("message", handleMessage); //The message event occurs when the WebSocket recieves a message
         ws.addEventListener('close', handleDisconnect);//The close event occurs when a connection with a WebSocket is closed.
