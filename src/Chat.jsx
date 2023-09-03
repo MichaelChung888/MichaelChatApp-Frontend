@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState, useRef } from "react";
-import ProfilePic from "./ProfilePic";
 import { UserContext } from "./UserContext";
 import { uniqBy } from "lodash";
 import axios from "axios";
@@ -32,8 +31,8 @@ const UploadIcon = () => (
 );
 
 const AttachedIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
     </svg>
 
 );
@@ -50,23 +49,19 @@ export default function Chat() {
 
 
     useEffect(() => {
+        if (ws) {
+            ws.close();
+            setWs(null);
+        }
         connectToWs();
-    }, [selectedUserId]); //This effect hook is only ran once, at the start (due to "[]")
+    }, [selectedUserId]); //This effect hook is only ran upon logging in
 
     //This "WebSocket" allows data exchange between the client and server over a persistent connection
     function connectToWs() {
-        const ws = new WebSocket("ws://michaelchatapp-backend.onrender.com"); //Set up a websocket connection to our server/backend
+        const ws = new WebSocket("wss://michaelchatapp-backend.onrender.com"); //Set up a websocket connection to our server/backend
         setWs(ws);
-        ws.addEventListener("message", handleMessage); //The message event occurs when the WebSocket recieves a message
-        ws.addEventListener('close', handleDisconnect);//The close event occurs when a connection with a WebSocket is closed.
+        ws.addEventListener("message", handleMessage); //The message event occurs when the WebSocket recieves a message.
     }
-
-    function handleDisconnect() { //Repeatedly try to reconnect to server if Websocket closed
-        setTimeout(() => {
-            console.log('Disconnected. Trying to reconnect.');
-            connectToWs();
-        }, 1000);
-    };
 
     function handleMessage(e) {
         const messageData = JSON.parse(e.data); //Parse the JSON string back into a JSON object
@@ -76,7 +71,7 @@ export default function Chat() {
             if (messageData.sender === selectedUserId) {
                 setMessages(prev => ([...prev, { ...messageData }])); //NOTE: Passing a function to setState() will treat it as an "updater function"
             }                                                         //It should take the pending state as its only argument, and should return the next state
-        }                                                      
+        }                                                   
     }
 
     function showOnlinePeople(peopleArray) {
@@ -88,7 +83,7 @@ export default function Chat() {
     }
 
     function sendMessage(ev, file = null) {
-        if (ev) ev.preventDefault(); //So it will not reload the page
+        if (ev) ev.preventDefault(); //Prevent reloading the page upon form submission/sending message
         ws.send(JSON.stringify({
             recipient: selectedUserId,
             text: newMessageText,
@@ -122,14 +117,13 @@ export default function Chat() {
     }
 
     function logout() {
-        axios.post("/logout").then(() => { //Send post request to change your cookie token to empty
-            setWs(null) //Kill WebSocket
+        axios.post("/logout").then(async () => { //Send post request to change your cookie token to empty
+            setWs(null); 
             setLoggedInId(null);
             setLoggedInUsername(null); //Change back the states to null
-        })
+            ws.close(); //Kill websocket
+        });
     }
-
-
 
     useEffect(() => {  //WILL SCROLL TO BOTTOM OF CHAT WHEN NEW MESSAGE APPEARS
         const div = divUnderMessages.current;
@@ -139,10 +133,12 @@ export default function Chat() {
     }, [messages]); //This hook will be run every time messages changes(a new message for e.g)
 
     useEffect(() => { //FETCH MESSAGES OF SELECTED USER FROM MONGODB
+        console.log("Selected User Id has changed:", selectedUserId);
         if (selectedUserId) {
             axios.get("/messages/" + selectedUserId).then(res => {
                 setMessages(res.data);
             });
+
         }
     }, [selectedUserId]);
 
@@ -176,7 +172,7 @@ export default function Chat() {
                             key={userId}
                             userId={userId}
                             username={onlinePeople[userId]}
-                            clicked={setSelectedUserId}
+                            clicked={() => setSelectedUserId(userId)}
                             selected={selectedUserId}
                             online={true}
                             myUsername={loggedInUsername}
@@ -187,7 +183,7 @@ export default function Chat() {
                             key={userId}
                             userId={userId}
                             username={offlinePeople[userId]}
-                            clicked={setSelectedUserId}
+                            clicked={() => setSelectedUserId(userId)}
                             selected={selectedUserId}
                             online={false}
                             myUsername={loggedInUsername}

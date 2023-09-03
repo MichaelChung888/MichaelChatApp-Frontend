@@ -9,21 +9,45 @@ const MessageIcon = () => (
     </svg>
 );
 
+const Reasons = {
+    "emptyUserPass": "Please fill out this field",
+    "emptyUser": "Please fill out this field",
+    "emptyPass": "Please fill out this field",
+    "incorrect": "Incorrect Username or Password",
+    "nameUsed": "Name is already taken",
+    "notFound": "Account not found"
+}
+
 export default function RegisterLoginForm() {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [incorrectUserPass, setIncorrectUserPass] = useState(false);
+    const [incorrectUserPass, setIncorrectUserPass] = useState("");
     const [isLoginOrRegister, setIsLoginOrRegister] = useState("login")
     const { setLoggedInUsername, setLoggedInId } = useContext(UserContext);
 
     async function handleSubmit(e) {
         e.preventDefault();
-        await axios.post(isLoginOrRegister, { username, password }).then(res => {
-            setLoggedInUsername(username);
-            setLoggedInId(res.data.id);
-            setIncorrectUserPass(false);
-        }).catch(() => setIncorrectUserPass(true)); 
+        if (username === "" && password === "") {
+            setIncorrectUserPass("emptyUserPass");
+        }
+        else if (username === "") {
+            setIncorrectUserPass("emptyUser");
+        }
+        else if (password === "") {
+            setIncorrectUserPass("emptyPass");
+        }
+        else {
+            await axios.post(isLoginOrRegister, { username, password }).then(res => {
+                setLoggedInUsername(username);
+                setLoggedInId(res.data.id);
+                setIncorrectUserPass("");
+            }).catch(err => {
+                const reason = err.response.data; //incorrect, nameUsed, notFound
+                setIncorrectUserPass(reason);
+            });
+        }
+
         //This will send the form data to the server and respond with userId if successful
     }
 
@@ -39,6 +63,9 @@ export default function RegisterLoginForm() {
     mb=margin-bottom
     */
 
+    const usernameError = ["emptyUserPass", "emptyUser", "incorrect", "nameUsed", "notFound"].includes(incorrectUserPass);
+    const passwordError = ["emptyUserPass", "incorrect", "emptyPass"].includes(incorrectUserPass);
+
     return (
         <div className="bg-blue-50 h-screen flex items-center">
             <form className="w-80 mx-auto mb-12" onSubmit={handleSubmit}>
@@ -49,17 +76,25 @@ export default function RegisterLoginForm() {
                 <input value={username}
                     onChange={e => setUsername(e.target.value)} //Takes the element's value and updates the state
                     type="text" placeholder="username"
-                    className={"block w-full rounded-sm p-3 mb-3 border-2 "+(incorrectUserPass && isLoginOrRegister === "register" ? "border-red-500" : "")}/>
-                {incorrectUserPass && isLoginOrRegister === "register" && (
-                    <div className="text-center mb-3 text-red-500 font-bold">Username already taken. Please enter another one.</div>
+                    className={"block w-full rounded-sm p-3 mb-3 border-2 " + (usernameError ? "border-red-500" : "")} />
+
+                {usernameError && (
+                    <div className="text-center mb-3 text-red-500 font-bold">
+                        {Reasons[incorrectUserPass]}
+                    </div>
                 )}
+
                 <input value={password}
                     onChange={e => setPassword(e.target.value)}
                     type="password" placeholder="password"
-                    className={"block w-full rounded-sm p-3 mb-3 border-2 "+(incorrectUserPass && isLoginOrRegister === "login" ? "border-red-500" : "")} />
-                {incorrectUserPass && isLoginOrRegister === "login" && (
-                    <div className="text-center mb-3 text-red-500 font-bold">Incorrect Password. Please try again.</div>
+                    className={"block w-full rounded-sm p-3 mb-3 border-2 " + (passwordError ? "border-red-500" : "")} />
+
+                {passwordError && (
+                    <div className="text-center mb-3 text-red-500 font-bold">
+                        {Reasons[incorrectUserPass]}
+                    </div>
                 )}
+
                 <button className="bg-blue-500 text-white block w-full rounded-sm p-3">
                     {isLoginOrRegister === "register" ? "Register" : "Login"}
                 </button>
@@ -67,13 +102,13 @@ export default function RegisterLoginForm() {
                     {isLoginOrRegister === "register" && (
                         <>
                             <div>Already a member?</div>
-                            <button onClick={() => {setIsLoginOrRegister("login"); setIncorrectUserPass(false);}}><span className="font-bold underline">Login here</span></button>
+                            <button onClick={() => { setIsLoginOrRegister("login"); setIncorrectUserPass(""); }}><span className="font-bold underline">Login here</span></button>
                         </>
                     )}
                     {isLoginOrRegister === "login" && (
                         <>
                             <div>Don't have an account?</div>
-                            <button onClick={() => {setIsLoginOrRegister("register"); setIncorrectUserPass(false);}}><span className="font-bold underline">Register here</span></button>
+                            <button onClick={() => { setIsLoginOrRegister("register"); setIncorrectUserPass(""); }}><span className="font-bold underline">Register here</span></button>
                         </>
 
                     )}
