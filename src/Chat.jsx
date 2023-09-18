@@ -68,7 +68,7 @@ export default function Chat() {
         if ("online" in messageData) {
             showOnlinePeople(messageData.online);
         } else if ("text" in messageData) {
-            if (messageData.sender === selectedUserId) {
+            if (messageData.sender === selectedUserId || messageData.sender === loggedInId) {
                 setMessages(prev => ([...prev, { ...messageData }])); //NOTE: Passing a function to setState() will treat it as an "updater function"
             }                                                         //It should take the pending state as its only argument, and should return the next state
         }                                                   
