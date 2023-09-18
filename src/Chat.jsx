@@ -89,20 +89,7 @@ export default function Chat() {
             text: newMessageText,
             file: file
         }));
-        if (file) {
-            axios.get("/messages/" + selectedUserId).then(res => {
-                setMessages(res.data);
-            });
-        } else {
-            setNewMessageText(""); //Reset the message input 
-            setMessages(prev => ([...prev, {
-                text: newMessageText,
-                sender: loggedInId,
-                recipient: selectedUserId,
-                _id: Date.now()
-            }])); //Append the message to message history
-        }
-
+        if (!file) setNewMessageText(""); //Reset the message input 
     }
 
     function sendFile(ev) {
@@ -114,6 +101,7 @@ export default function Chat() {
                 data: reader.result
             });
         }
+        reader.onerror = (err) => { throw err; }
     }
 
     function logout() {
@@ -133,13 +121,12 @@ export default function Chat() {
     }, [messages]); //This hook will be run every time messages changes(a new message for e.g)
 
     useEffect(() => { //FETCH MESSAGES OF SELECTED USER FROM MONGODB
-        console.log("Selected User Id has changed:", selectedUserId);
         if (selectedUserId) {
             axios.get("/messages/" + selectedUserId).then(res => {
                 setMessages(res.data);
             });
-
         }
+        console.log(messages);
     }, [selectedUserId]);
 
     useEffect(() => { //FETCHING ALL OFFLINE PEOPLE
@@ -212,13 +199,15 @@ export default function Chat() {
                                     <div key={message._id} className={(message.sender === loggedInId ? "text-right" : "text-left")}>
                                         <div className={"max-w-2xl break-words text-left inline-block p-2 my-2 rounded-md " + (message.sender === loggedInId ? "bg-blue-500 text-white" : "bg-white text-gray-500")}>
                                             {message.text}
-                                            {message.file && (
-                                                <div>
-                                                    <a target="_blank" className="flex items-center gap-1 border-b" href={axios.defaults.baseURL + "/uploads/" + message.file}>
-                                                        <AttachedIcon />
-                                                        {message.file}
-                                                    </a>
-                                                </div>)}
+                                            {message.file && ( 
+                                                message.file.type === "img" ?
+                                                <a href={message.file.data} download={message.file.name}><img src={message.file.data} alt="Could not load" /></a>
+                                                :
+                                                message.file.type === "other" ?
+                                                <a href={message.file.data} download={message.file.name} className="flex items-center gap-1 border-b"><AttachedIcon />{message.file.name}</a> 
+                                                :
+                                                null
+                                                )}
                                         </div>
                                     </div>
                                 ))}
